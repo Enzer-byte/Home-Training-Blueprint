@@ -6,6 +6,7 @@ import { FAQSection } from './FAQSection';
 import { StickyBar } from './StickyBar';
 import { TrustBadges } from './TrustBadges';
 import { FooterLinksModal } from './FooterLinksModal';
+import { trackCtaClick } from '../services/analytics';
 
 interface SalesPageProps {
   content: SalesPageContent;
@@ -28,7 +29,7 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
       {/* Optional Urgency Banner (Configurable in CMS, default off) */}
       {content.enableUrgencyBanner && content.urgencyBannerText && (
         <div
-          className="bg-[#A64B2A] text-[#FFFDF9] text-center text-xs sm:text-sm font-semibold py-2 px-4 sticky top-0 z-50 shadow-sm"
+          className="bg-[#0022DA] text-white text-center text-xs sm:text-sm font-semibold py-2.5 px-4 sticky top-0 z-50 shadow-md"
           id="urgency-banner"
         >
           {content.urgencyBannerText}
@@ -105,6 +106,7 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             id="intro-buy-btn"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick('intro', content.introCtaText, content.introCtaUrl)}
           >
             {content.introCtaText}
           </a>
@@ -144,13 +146,13 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
 
           {/* Social Proof Reviews (CMS extensible, defaults to off until real parent reviews are added) */}
           {content.enableSocialProofSection && content.testimonials && content.testimonials.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-[rgba(36,52,75,0.12)] space-y-4" id="testimonials-block">
-              <h3 className="font-serif text-lg font-bold text-[#24344B]">Early Readers' Reflections</h3>
+            <div className="mt-8 pt-6 border-t border-slate-200 space-y-4" id="testimonials-block">
+              <h3 className="font-serif text-lg font-bold text-[#0F172A]">Early Readers' Reflections</h3>
               <div className="space-y-3">
                 {content.testimonials.map((test) => (
-                  <div key={test.id} className="bg-white p-4 rounded-lg border border-[rgba(36,52,75,0.1)] text-sm">
-                    <p className="italic text-[#55483A] mb-2">"{test.quote}"</p>
-                    <div className="font-semibold text-[#24344B] text-xs">
+                  <div key={test.id} className="bg-white p-4 rounded-xl border border-slate-200 text-sm shadow-sm">
+                    <p className="italic text-[#334155] mb-2 leading-relaxed">"{test.quote}"</p>
+                    <div className="font-semibold text-[#0022DA] text-xs">
                       {test.name} {test.location ? `• ${test.location}` : ''}
                     </div>
                   </div>
@@ -210,6 +212,7 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             id="price-buy-btn"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick('price', content.priceCtaText, content.priceCtaUrl)}
           >
             {content.priceCtaText}
           </a>
@@ -250,6 +253,7 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             id="close-buy-btn"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick('close', content.closeCtaText, content.closeCtaUrl)}
           >
             {content.closeCtaText}
           </a>
@@ -270,6 +274,7 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             id="ps-buy-btn"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick('ps', content.psCtaText, content.psCtaUrl)}
           >
             {content.psCtaText}
           </a>

@@ -51,10 +51,10 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FBF6EC] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#A64B2A] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="font-serif text-[#24344B] text-sm">Loading Home Training Blueprint...</p>
+          <div className="w-10 h-10 border-3 border-[#0022DA] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="font-serif text-[#0F172A] text-sm">Loading Home Training Blueprint...</p>
         </div>
       </div>
     );

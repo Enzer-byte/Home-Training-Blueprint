@@ -128,3 +128,26 @@ export interface AdminUser {
   username: string;
   token: string;
 }
+
+export interface ClickEventItem {
+  id: string;
+  buttonId: 'price' | 'close' | 'ps' | 'sticky' | string;
+  buttonLabel: string;
+  targetUrl: string;
+  timestamp: string;
+  userAgent?: string;
+  referrer?: string;
+}
+
+export interface AnalyticsStats {
+  totalClicks: number;
+  clicksByButton: {
+    price: number;
+    close: number;
+    ps: number;
+    sticky: number;
+    [key: string]: number;
+  };
+  recentEvents: ClickEventItem[];
+  lastUpdated: string;
+}

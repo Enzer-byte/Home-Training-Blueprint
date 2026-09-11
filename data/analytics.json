@@ -1,0 +1,11 @@
+{
+  "totalClicks": 0,
+  "clicksByButton": {
+    "price": 0,
+    "close": 0,
+    "ps": 0,
+    "sticky": 0
+  },
+  "recentEvents": [],
+  "lastUpdated": "2026-09-11T11:28:33.815Z"
+}

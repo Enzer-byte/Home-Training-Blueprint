@@ -13,7 +13,68 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 // Directories for persistent data and uploads
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
+const ANALYTICS_FILE = path.join(DATA_DIR, 'analytics.json');
 const PUBLIC_UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
+
+// Analytics data structures and file persistence helpers
+interface AnalyticsClickEvent {
+  id: string;
+  buttonId: string;
+  buttonLabel: string;
+  targetUrl: string;
+  timestamp: string;
+  userAgent?: string;
+  referrer?: string;
+}
+
+interface AnalyticsPayload {
+  totalClicks: number;
+  clicksByButton: {
+    price: number;
+    close: number;
+    ps: number;
+    sticky: number;
+    [key: string]: number;
+  };
+  recentEvents: AnalyticsClickEvent[];
+  lastUpdated: string;
+}
+
+function loadAnalytics(): AnalyticsPayload {
+  try {
+    if (fs.existsSync(ANALYTICS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(ANALYTICS_FILE, 'utf-8'));
+      return {
+        totalClicks: typeof data.totalClicks === 'number' ? data.totalClicks : 0,
+        clicksByButton: {
+          price: data.clicksByButton?.price || 0,
+          close: data.clicksByButton?.close || 0,
+          ps: data.clicksByButton?.ps || 0,
+          sticky: data.clicksByButton?.sticky || 0,
+          ...(data.clicksByButton || {})
+        },
+        recentEvents: Array.isArray(data.recentEvents) ? data.recentEvents : [],
+        lastUpdated: data.lastUpdated || new Date().toISOString()
+      };
+    }
+  } catch (err) {
+    console.error('Error loading analytics file:', err);
+  }
+  return {
+    totalClicks: 0,
+    clicksByButton: { price: 0, close: 0, ps: 0, sticky: 0 },
+    recentEvents: [],
+    lastUpdated: new Date().toISOString()
+  };
+}
+
+function saveAnalytics(data: AnalyticsPayload) {
+  try {
+    fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error writing analytics file:', err);
+  }
+}
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -223,6 +284,97 @@ app.post('/api/upload', (req: Request, res: Response) => {
   } catch (error) {
     console.error('Image upload failed:', error);
     return res.status(500).json({ success: false, message: 'Failed to upload image' });
+  }
+});
+
+// ----------------- ANALYTICS TRACKING & STATS API -----------------
+
+// POST /api/analytics/track - Public lightweight tracking of CTA button clicks
+app.post('/api/analytics/track', (req: Request, res: Response) => {
+  try {
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+
+    const { buttonId, buttonLabel, targetUrl, referrer } = body || {};
+    const validButtonId = String(buttonId || 'unknown').trim().toLowerCase();
+    const validLabel = String(buttonLabel || 'Buy Button').trim().substring(0, 100);
+    const validTarget = String(targetUrl || '').trim().substring(0, 300);
+
+    const currentData = loadAnalytics();
+    currentData.totalClicks = (currentData.totalClicks || 0) + 1;
+
+    if (!currentData.clicksByButton[validButtonId]) {
+      currentData.clicksByButton[validButtonId] = 0;
+    }
+    currentData.clicksByButton[validButtonId] += 1;
+
+    const newEvent: AnalyticsClickEvent = {
+      id: 'clk_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
+      buttonId: validButtonId,
+      buttonLabel: validLabel,
+      targetUrl: validTarget,
+      timestamp: new Date().toISOString(),
+      userAgent: req.headers['user-agent'] ? String(req.headers['user-agent']).substring(0, 150) : undefined,
+      referrer: referrer || (req.headers['referer'] ? String(req.headers['referer']).substring(0, 150) : undefined)
+    };
+
+    // Keep the 100 most recent events to prevent unlimited storage growth
+    currentData.recentEvents = [newEvent, ...(currentData.recentEvents || [])].slice(0, 100);
+    currentData.lastUpdated = new Date().toISOString();
+
+    saveAnalytics(currentData);
+
+    return res.status(200).json({
+      success: true,
+      totalClicks: currentData.totalClicks,
+      buttonCount: currentData.clicksByButton[validButtonId]
+    });
+  } catch (err) {
+    console.error('Error in /api/analytics/track:', err);
+    return res.status(200).json({ success: false, error: 'Tracking failed silently' });
+  }
+});
+
+// GET /api/analytics/stats - Retrieve aggregated sales performance click stats
+app.get('/api/analytics/stats', (req: Request, res: Response) => {
+  try {
+    const stats = loadAnalytics();
+    return res.json({ success: true, stats });
+  } catch (err) {
+    console.error('Error fetching analytics stats:', err);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve stats' });
+  }
+});
+
+// POST /api/analytics/reset - Reset click counters (Admin only)
+app.post('/api/analytics/reset', (req: Request, res: Response) => {
+  if (!isAuthorized(req)) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  try {
+    const resetData: AnalyticsPayload = {
+      totalClicks: 0,
+      clicksByButton: {
+        price: 0,
+        close: 0,
+        ps: 0,
+        sticky: 0
+      },
+      recentEvents: [],
+      lastUpdated: new Date().toISOString()
+    };
+    saveAnalytics(resetData);
+    return res.json({ success: true, message: 'Click analytics reset to 0' });
+  } catch (err) {
+    console.error('Error resetting analytics:', err);
+    return res.status(500).json({ success: false, message: 'Failed to reset analytics' });
   }
 });
 

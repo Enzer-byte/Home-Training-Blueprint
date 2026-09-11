@@ -1,4 +1,4 @@
-import { SalesPageContent } from '../types';
+import { SalesPageContent, AnalyticsStats } from '../types';
 import { DEFAULT_CONTENT } from '../defaultContent';
 
 const TOKEN_KEY = 'hometraining_admin_token';
@@ -184,5 +184,51 @@ export const api = {
     }
     localStorage.removeItem(LOCAL_BACKUP_KEY);
     return { success: true };
+  },
+
+  // Fetch sales clicks analytics
+  async getAnalyticsStats(): Promise<{ success: boolean; stats: AnalyticsStats }> {
+    const token = this.getToken();
+    try {
+      const res = await fetch('/api/analytics/stats', {
+        headers: {
+          Authorization: `Bearer ${token || ''}`
+        }
+      });
+      const data = await res.json();
+      if (data.success && data.stats) {
+        return { success: true, stats: data.stats };
+      }
+    } catch (e) {
+      console.warn('Failed to fetch analytics from server, using local fallback:', e);
+    }
+
+    // Default empty stats fallback
+    return {
+      success: true,
+      stats: {
+        totalClicks: 0,
+        clicksByButton: { price: 0, close: 0, ps: 0, sticky: 0 },
+        recentEvents: [],
+        lastUpdated: new Date().toISOString()
+      }
+    };
+  },
+
+  // Reset sales analytics counters
+  async resetAnalytics(): Promise<{ success: boolean; message?: string }> {
+    const token = this.getToken();
+    try {
+      const res = await fetch('/api/analytics/reset', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token || ''}`
+        }
+      });
+      const data = await res.json();
+      return { success: data.success ?? true, message: data.message };
+    } catch {
+      return { success: false, message: 'Failed to reset analytics' };
+    }
   }
 };
