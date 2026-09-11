@@ -1,0 +1,6 @@
+{
+  "name": "Home Training Blueprint",
+  "description": "The Home Training Blueprint Bundle sales page and content management system by SheRoots Foundation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

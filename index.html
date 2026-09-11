@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // Compatibility shim: ensure window.fetch has both getter and setter
+      // Prevents "Uncaught TypeError: Cannot set property fetch of #<Window> which has only a getter"
+      // when preview proxies, analytics, or polyfills assign to window.fetch
+      (function() {
+        try {
+          if (typeof window !== 'undefined') {
+            var proto = (typeof Window !== 'undefined' && Window.prototype) || Object.getPrototypeOf(window);
+            var nativeFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+            var currentFetch = nativeFetch;
+
+            var descriptor = {
+              get: function() {
+                return currentFetch;
+              },
+              set: function(fn) {
+                currentFetch = fn;
+              },
+              configurable: true,
+              enumerable: true
+            };
+
+            try {
+              Object.defineProperty(window, 'fetch', descriptor);
+            } catch (e) {}
+
+            if (proto && proto !== window) {
+              try {
+                Object.defineProperty(proto, 'fetch', descriptor);
+              } catch (e) {}
+            }
+          }
+        } catch (err) {}
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Home Training Blueprint Bundle — SheRoots Foundation</title>
+    <meta name="description" content="The Home Training Blueprint Bundle by SheRoots Foundation — Transform parenting patterns with practical discipline frameworks and guidance." />
+    <meta property="og:title" content="The Home Training Blueprint Bundle — SheRoots Foundation" />
+    <meta property="og:description" content="The Home Training Blueprint Bundle by SheRoots Foundation — Transform parenting patterns with practical discipline frameworks and guidance." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
