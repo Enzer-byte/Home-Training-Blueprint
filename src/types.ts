@@ -151,3 +151,28 @@ export interface AnalyticsStats {
   recentEvents: ClickEventItem[];
   lastUpdated: string;
 }
+
+export interface ImageOptimizationOptions {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number; // 0.1 to 1.0, defaults to 0.82
+  outputFormat?: 'image/webp' | 'image/jpeg' | 'image/png' | 'auto';
+  maxSizeBytes?: number;
+  fileName?: string;
+}
+
+export interface OptimizationResult {
+  file: File;
+  blob: Blob;
+  dataUrl: string;
+  originalSize: number;
+  compressedSize: number;
+  bytesSaved: number;
+  savingsPercent: number;
+  originalWidth: number;
+  originalHeight: number;
+  width: number;
+  height: number;
+  format: string;
+  fileName: string;
+}

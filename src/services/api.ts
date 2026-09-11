@@ -1,5 +1,8 @@
-import { SalesPageContent, AnalyticsStats } from '../types';
+import { SalesPageContent, AnalyticsStats, ImageOptimizationOptions, OptimizationResult } from '../types';
 import { DEFAULT_CONTENT } from '../defaultContent';
+import { resizeAndCompressImage, formatFileSize, uploadToFirebaseStorage } from '../utils/imageOptimizer';
+
+export { resizeAndCompressImage, formatFileSize, uploadToFirebaseStorage };
 
 const TOKEN_KEY = 'hometraining_admin_token';
 const USERNAME_KEY = 'hometraining_admin_user';
@@ -139,7 +142,7 @@ export const api = {
     }
   },
 
-  // Upload image
+  // Upload image (raw base64)
   async uploadImage(
     fileData: string,
     fileName: string,
@@ -167,6 +170,45 @@ export const api = {
         success: true,
         url: fileData,
         message: 'Stored image data directly'
+      };
+    }
+  },
+
+  // Upload optimized image: automatically resizes and compresses before uploading
+  async uploadOptimizedImage(
+    file: File | Blob,
+    options?: ImageOptimizationOptions
+  ): Promise<{
+    success: boolean;
+    url?: string;
+    result?: OptimizationResult;
+    message?: string;
+  }> {
+    try {
+      // 1. Resize and compress the image
+      const result = await resizeAndCompressImage(file, options);
+
+      // 2. Upload the compressed result
+      const uploadRes = await this.uploadImage(result.dataUrl, result.fileName, result.format);
+
+      if (uploadRes.success && uploadRes.url) {
+        return {
+          success: true,
+          url: uploadRes.url,
+          result,
+          message: `Compressed by ${result.savingsPercent}% (${formatFileSize(result.originalSize)} -> ${formatFileSize(result.compressedSize)})`
+        };
+      }
+
+      return {
+        success: false,
+        message: uploadRes.message || 'Image upload failed'
+      };
+    } catch (err) {
+      console.error('Optimized upload error:', err);
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Compression or upload failed'
       };
     }
   },

@@ -15,10 +15,12 @@ import {
   DollarSign,
   Sparkles,
   AlertCircle,
-  BarChart3
+  BarChart3,
+  Zap
 } from 'lucide-react';
 import { SalesPageContent, ProductItem, FaqItem, TestimonialItem } from '../types';
 import { api } from '../services/api';
+import { resizeAndCompressImage, formatFileSize } from '../utils/imageOptimizer';
 import { DEFAULT_CONTENT } from '../defaultContent';
 import { AdminAnalytics } from './AdminAnalytics';
 
@@ -46,12 +48,14 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const heroFileRef = useRef<HTMLInputElement>(null);
 
   // Simple notification handler
-  const triggerStatus = (status: 'saved' | 'error', msg: string) => {
+  const triggerStatus = (status: 'saved' | 'error' | 'saving', msg: string) => {
     setSaveStatus(status);
     setStatusMessage(msg);
-    setTimeout(() => {
-      setSaveStatus('idle');
-    }, 4000);
+    if (status !== 'saving') {
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 4000);
+    }
   };
 
   // Save changes to backend
@@ -85,7 +89,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     triggerStatus('saved', 'Reverted to original source copy.');
   };
 
-  // Handle image file selection & upload
+  // Handle image file selection & upload with automatic client-side resizing and compression
   const handleImageUpload = async (
     file: File,
     targetType: 'hero' | 'product',
@@ -98,45 +102,52 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      triggerStatus('error', 'File is too large (max 5MB). Please choose a compressed image.');
+    if (file.size > 25 * 1024 * 1024) {
+      triggerStatus('error', 'File is extremely large (exceeds 25MB). Please select an image under 25MB.');
       return;
     }
 
     const fieldKey = targetType === 'hero' ? 'hero' : `product-${productId}`;
     setUploadingField(fieldKey);
+    triggerStatus('saving', 'Optimizing and compressing image for fast page load...');
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Data = e.target?.result as string;
-      try {
-        const res = await api.uploadImage(base64Data, file.name, file.type);
-        if (res.success && res.url) {
-          if (targetType === 'hero') {
-            setContent((prev) => ({ ...prev, heroImageUrl: res.url! }));
-          } else if (productId) {
-            setContent((prev) => {
-              const updateList = (list: ProductItem[]) =>
-                list.map((p) => (p.id === productId ? { ...p, imageUrl: res.url! } : p));
-              return {
-                ...prev,
-                coreProducts: updateList(prev.coreProducts),
-                bonusProducts: updateList(prev.bonusProducts)
-              };
-            });
-          }
-          triggerStatus('saved', `Image uploaded successfully for ${targetType === 'hero' ? 'Hero' : 'Product'}!`);
-        } else {
-          triggerStatus('error', res.message || 'Upload failed');
+    try {
+      // 1. Automatically resize and compress image to modern WebP/JPEG before upload
+      const optimized = await resizeAndCompressImage(file, {
+        maxWidth: targetType === 'hero' ? 1600 : 1000,
+        maxHeight: targetType === 'hero' ? 1600 : 1000,
+        quality: 0.82
+      });
+
+      // 2. Upload the compressed result
+      const res = await api.uploadImage(optimized.dataUrl, optimized.fileName, optimized.format);
+      if (res.success && res.url) {
+        if (targetType === 'hero') {
+          setContent((prev) => ({ ...prev, heroImageUrl: res.url! }));
+        } else if (productId) {
+          setContent((prev) => {
+            const updateList = (list: ProductItem[]) =>
+              list.map((p) => (p.id === productId ? { ...p, imageUrl: res.url! } : p));
+            return {
+              ...prev,
+              coreProducts: updateList(prev.coreProducts),
+              bonusProducts: updateList(prev.bonusProducts)
+            };
+          });
         }
-      } catch (err) {
-        console.error('Upload error:', err);
-        triggerStatus('error', 'Failed to upload image. Please try again.');
-      } finally {
-        setUploadingField(null);
+        triggerStatus(
+          'saved',
+          `Optimized & saved! ${formatFileSize(optimized.originalSize)} → ${formatFileSize(optimized.compressedSize)} (${optimized.savingsPercent}% reduction for faster load times)`
+        );
+      } else {
+        triggerStatus('error', res.message || 'Upload failed');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Upload error:', err);
+      triggerStatus('error', 'Failed to compress or upload image. Please try again.');
+    } finally {
+      setUploadingField(null);
+    }
   };
 
   // Update specific core or bonus product
@@ -376,8 +387,23 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 </h2>
                 <p className="text-sm text-[#64748B] mt-1">
                   Upload, replace, or link images for the Hero banner and each individual product item.
-                  All images are independently editable and validate file sizes up to 5MB.
+                  All images are independently editable and automatically compressed for maximum page speed.
                 </p>
+              </div>
+
+              {/* Automatic Compression & Fast Load Banner */}
+              <div className="bg-[#EFF4FE] border border-[rgba(0,34,218,0.2)] rounded-xl p-4 flex items-start gap-3" id="image-compression-badge">
+                <div className="p-2 bg-[#0022DA] text-white rounded-lg mt-0.5 shrink-0">
+                  <Zap size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#0022DA]">
+                    Auto-Compression & Fast Page Load Engine Active
+                  </h3>
+                  <p className="text-xs text-[#334155] mt-0.5 leading-relaxed">
+                    Any image you upload is automatically downscaled and compressed client-side before uploading to Firebase Storage or hosting servers (max 1600px for Hero, 1000px for products). This reduces payload sizes by up to 90% without visible quality loss, ensuring rapid mobile page loads.
+                  </p>
+                </div>
               </div>
 
               {/* HERO IMAGE FIELD */}
