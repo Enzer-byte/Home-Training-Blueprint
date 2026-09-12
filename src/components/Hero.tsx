@@ -1,5 +1,4 @@
 import React from 'react';
-import { ImageIcon } from 'lucide-react';
 import { SalesPageContent } from '../types';
 
 interface HeroProps {

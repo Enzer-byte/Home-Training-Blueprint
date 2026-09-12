@@ -11,11 +11,19 @@ import { AdminCMS } from './components/AdminCMS';
 import { SalesPageContent } from './types';
 import { DEFAULT_CONTENT } from './defaultContent';
 import { api } from './services/api';
+import { applyBrandColor } from './utils/theme';
 
 export default function App() {
   const [content, setContent] = useState<SalesPageContent>(DEFAULT_CONTENT);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Apply primary brand color dynamically to CSS variables whenever it updates
+  useEffect(() => {
+    if (content.primaryBrandColor) {
+      applyBrandColor(content.primaryBrandColor);
+    }
+  }, [content.primaryBrandColor]);
 
   // Load initial content and check admin authentication status
   useEffect(() => {

@@ -8,8 +8,17 @@ interface StickyBarProps {
 }
 
 export const StickyBar: React.FC<StickyBarProps> = ({ price, buttonText, ctaUrl }) => {
-  const handleClick = () => {
+  const isAnchor = ctaUrl?.startsWith('#');
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     trackCtaClick('sticky', buttonText, ctaUrl);
+    if (isAnchor) {
+      e.preventDefault();
+      const el = document.querySelector(ctaUrl);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
   };
 
   return (
@@ -18,8 +27,8 @@ export const StickyBar: React.FC<StickyBarProps> = ({ price, buttonText, ctaUrl 
       <a
         href={ctaUrl}
         id="sb-buy-link"
-        target="_blank"
-        rel="noopener noreferrer"
+        target={isAnchor ? undefined : '_blank'}
+        rel={isAnchor ? undefined : 'noopener noreferrer'}
         onClick={handleClick}
       >
         {buttonText}

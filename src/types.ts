@@ -111,9 +111,26 @@ export interface SalesPageContent {
   // Footer
   footerText: string;
 
+  // Brand Color & Theme (Dynamically updates CSS variables)
+  primaryBrandColor?: string;
+
   // Best Practice Extensible Features
   enableUrgencyBanner: boolean;
   urgencyBannerText: string;
+
+  // Urgency Countdown Timer Component (Customizable in backend: days, minutes, seconds)
+  enableCountdownTimer: boolean;
+  countdownOfferTitle: string;
+  countdownOfferSubtitle: string;
+  countdownDays: number;
+  countdownHours: number;
+  countdownMinutes: number;
+  countdownSeconds: number;
+  countdownTargetTimestamp?: number;
+  countdownShowInTopBanner: boolean;
+  countdownShowInPriceSection: boolean;
+  countdownExpiredText: string;
+
   enableSocialProofSection: boolean;
   testimonials: TestimonialItem[];
   enableTrustBadges: boolean;

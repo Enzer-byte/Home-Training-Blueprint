@@ -191,9 +191,25 @@ export const DEFAULT_CONTENT: SalesPageContent = {
 
   footerText: 'SheRoots Foundation — The Home Training Blueprint Bundle',
 
+  // Primary Brand Color (Dynamic CSS variables)
+  primaryBrandColor: '#0022DA',
+
   // Best Practice Extensible Features
   enableUrgencyBanner: false,
   urgencyBannerText: 'Launch Special: Early access price of ₦5,000 will be increasing to ₦7,000.',
+
+  // Urgency Countdown Timer Component (Customizable in days, minutes, and seconds)
+  enableCountdownTimer: true,
+  countdownOfferTitle: 'Limited Time Offer',
+  countdownOfferSubtitle: 'Launch discount window is closing soon — price rises from ₦5,000 to ₦7,000 once timer expires.',
+  countdownDays: 2,
+  countdownHours: 14,
+  countdownMinutes: 30,
+  countdownSeconds: 0,
+  countdownTargetTimestamp: 0, // dynamic computed or set by admin
+  countdownShowInTopBanner: true,
+  countdownShowInPriceSection: true,
+  countdownExpiredText: 'Special launch pricing window closing shortly — lock in ₦5,000 now!',
   enableSocialProofSection: false,
   testimonials: [],
   enableTrustBadges: true,

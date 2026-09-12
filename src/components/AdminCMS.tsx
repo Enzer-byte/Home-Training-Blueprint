@@ -16,13 +16,19 @@ import {
   Sparkles,
   AlertCircle,
   BarChart3,
-  Zap
+  Zap,
+  Palette,
+  Clock,
+  Flame,
+  RefreshCw
 } from 'lucide-react';
 import { SalesPageContent, ProductItem, FaqItem, TestimonialItem } from '../types';
 import { api } from '../services/api';
 import { resizeAndCompressImage, formatFileSize } from '../utils/imageOptimizer';
 import { DEFAULT_CONTENT } from '../defaultContent';
 import { AdminAnalytics } from './AdminAnalytics';
+import { CountdownTimer } from './CountdownTimer';
+import { applyBrandColor, BRAND_COLOR_PRESETS, computeThemeVariables } from '../utils/theme';
 
 interface AdminCMSProps {
   initialContent: SalesPageContent;
@@ -30,7 +36,7 @@ interface AdminCMSProps {
   onLogout: () => void;
 }
 
-type TabType = 'images' | 'copy' | 'pricing' | 'features' | 'analytics';
+type TabType = 'images' | 'branding' | 'urgency' | 'copy' | 'pricing' | 'features' | 'analytics';
 
 export const AdminCMS: React.FC<AdminCMSProps> = ({
   initialContent,
@@ -228,6 +234,62 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     }));
   };
 
+  // Brand Color Handlers (Dynamic CSS variables)
+  const handleBrandColorChange = (hex: string) => {
+    setContent((prev) => ({
+      ...prev,
+      primaryBrandColor: hex
+    }));
+    applyBrandColor(hex);
+    onContentUpdate({
+      ...content,
+      primaryBrandColor: hex
+    });
+  };
+
+  // Urgency Countdown Handlers (Customizable in days, minutes, and seconds)
+  const handleRestartCountdownTimer = () => {
+    const totalMs = (
+      (content.countdownDays || 0) * 86400 +
+      (content.countdownHours || 0) * 3600 +
+      (content.countdownMinutes || 0) * 60 +
+      (content.countdownSeconds || 0)
+    ) * 1000;
+    const newTarget = Date.now() + (totalMs > 0 ? totalMs : 86400 * 1000);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach((k) => {
+          if (k.startsWith('htb_timer_')) localStorage.removeItem(k);
+        });
+      } catch (e) {
+        console.warn('Could not clear timer localStorage', e);
+      }
+    }
+
+    setContent((prev) => ({
+      ...prev,
+      countdownTargetTimestamp: newTarget
+    }));
+    triggerStatus('saved', 'Countdown timer restarted and synchronized with backend!');
+  };
+
+  const applyCountdownPreset = (d: number, h: number, m: number, s: number) => {
+    const totalMs = (d * 86400 + h * 3600 + m * 60 + s) * 1000;
+    const newTarget = Date.now() + totalMs;
+
+    setContent((prev) => ({
+      ...prev,
+      countdownDays: d,
+      countdownHours: h,
+      countdownMinutes: m,
+      countdownSeconds: s,
+      countdownTargetTimestamp: newTarget
+    }));
+    triggerStatus('saved', `Applied ${d}d ${h}h ${m}m ${s}s preset!`);
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-24" id="admin-cms-dashboard">
       {/* Top Navigation Bar */}
@@ -237,7 +299,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             <span className="font-serif font-bold text-lg sm:text-xl text-white">
               SheRoots Foundation CMS
             </span>
-            <span className="hidden sm:inline-block bg-[#0022DA] text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide text-white">
+            <span
+              className="hidden sm:inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide text-white"
+              style={{ backgroundColor: 'var(--blue-primary)' }}
+            >
               ADMIN
             </span>
           </div>
@@ -258,7 +323,8 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               type="button"
               onClick={handleSave}
               disabled={saveStatus === 'saving'}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-[#0022DA] hover:bg-[#081EB8] text-white transition shadow disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-white transition shadow disabled:opacity-50 cursor-pointer hover:opacity-95"
+              style={{ backgroundColor: 'var(--blue-primary)' }}
               id="cms-publish-button"
             >
               {saveStatus === 'saving' ? (
@@ -308,13 +374,41 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             onClick={() => setActiveTab('images')}
             className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'images'
-                ? 'bg-white text-[#0022DA] border-t-2 border-[#0022DA] shadow-sm'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
             id="tab-images"
           >
             <ImageIcon size={16} />
-            <span>Image Manager (Hero & Products)</span>
+            <span>Images</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('branding')}
+            className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'branding'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+            id="tab-branding"
+          >
+            <Palette size={16} />
+            <span>Brand Color & Theme</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('urgency')}
+            className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === 'urgency'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+            id="tab-urgency"
+          >
+            <Clock size={16} />
+            <span>Urgency Countdown Timer</span>
           </button>
 
           <button
@@ -322,7 +416,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             onClick={() => setActiveTab('copy')}
             className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'copy'
-                ? 'bg-white text-[#0022DA] border-t-2 border-[#0022DA] shadow-sm'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
             id="tab-copy"
@@ -336,13 +430,13 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             onClick={() => setActiveTab('pricing')}
             className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'pricing'
-                ? 'bg-white text-[#0022DA] border-t-2 border-[#0022DA] shadow-sm'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
             id="tab-pricing"
           >
             <DollarSign size={16} />
-            <span>Pricing & Checkout Links</span>
+            <span>Pricing & Checkout</span>
           </button>
 
           <button
@@ -350,13 +444,13 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             onClick={() => setActiveTab('features')}
             className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'features'
-                ? 'bg-white text-[#0022DA] border-t-2 border-[#0022DA] shadow-sm'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
             id="tab-features"
           >
             <Sparkles size={16} />
-            <span>Sales Best Practices & SEO</span>
+            <span>Proof & SEO</span>
           </button>
 
           <button
@@ -364,13 +458,13 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             onClick={() => setActiveTab('analytics')}
             className={`px-4 py-2.5 rounded-t-lg font-bold text-sm flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
               activeTab === 'analytics'
-                ? 'bg-white text-[#0022DA] border-t-2 border-[#0022DA] shadow-sm'
+                ? 'bg-white text-[var(--blue-primary)] border-t-2 border-[var(--blue-primary)] shadow-sm'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
             id="tab-analytics"
           >
             <BarChart3 size={16} />
-            <span>Sales Clicks Analytics</span>
+            <span>Analytics</span>
           </button>
         </div>
 
@@ -621,8 +715,522 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
           )}
 
           {/* ========================================================= */}
-          {/* TAB 2: SECTION COPY & TEXTS                               */}
+          {/* TAB 2: BRAND COLOR & DYNAMIC THEME ENGINE                  */}
           {/* ========================================================= */}
+          {activeTab === 'branding' && (
+            <div className="space-y-8" id="cms-branding-section">
+              {/* Header */}
+              <div className="border-b border-slate-200 pb-4">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="p-2.5 rounded-xl text-white shadow-xs"
+                    style={{ backgroundColor: 'var(--blue-primary)' }}
+                  >
+                    <Palette size={22} />
+                  </span>
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-[#0F172A]">
+                      Brand Color & Dynamic CSS Variables
+                    </h2>
+                    <p className="text-sm text-[#64748B] mt-1">
+                      Toggle your signature brand color to instantly update CSS variables across the entire sales page, checkout buttons, guaranteed badges, and callouts in real time.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Curated Presets Grid */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#475569]">
+                    Curated Brand Palette Presets
+                  </h3>
+                  <span className="text-xs text-[#94A3B8]">Click any preset to toggle dynamically</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {BRAND_COLOR_PRESETS.map((preset) => {
+                    const isSelected =
+                      (content.primaryBrandColor || '#0022DA').toLowerCase() === preset.hex.toLowerCase();
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleBrandColorChange(preset.hex)}
+                        className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-2.5 relative group ${
+                          isSelected
+                            ? 'border-2 shadow-md bg-white'
+                            : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+                        }`}
+                        style={{
+                          borderColor: isSelected ? preset.hex : undefined
+                        }}
+                        id={`color-preset-${preset.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className="w-7 h-7 rounded-full shadow-inner border border-black/10 shrink-0"
+                              style={{ backgroundColor: preset.hex }}
+                            />
+                            <span className="font-bold text-sm text-[#0F172A]">
+                              {preset.name}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <span
+                              className="p-1 rounded-full text-white text-xs shadow-xs"
+                              style={{ backgroundColor: preset.hex }}
+                            >
+                              <CheckCircle size={14} />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#64748B] leading-relaxed">
+                          {preset.description}
+                        </p>
+                        <div className="text-[11px] font-mono font-medium text-[#94A3B8]">
+                          {preset.hex}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Color Selector */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+                <h3 className="text-sm font-bold text-[#0F172A] mb-3 flex items-center gap-2">
+                  <Sparkles size={16} style={{ color: 'var(--blue-primary)' }} />
+                  <span>Custom Hex Color Picker</span>
+                </h3>
+                <div className="flex flex-wrap items-center gap-5">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={content.primaryBrandColor || '#0022DA'}
+                      onChange={(e) => handleBrandColorChange(e.target.value)}
+                      className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-300 p-0.5 bg-white shadow-xs"
+                      id="custom-color-picker-input"
+                    />
+                    <div>
+                      <label className="block text-xs font-bold text-[#475569] mb-1">
+                        Hex Color Code
+                      </label>
+                      <input
+                        type="text"
+                        value={content.primaryBrandColor || '#0022DA'}
+                        onChange={(e) => handleBrandColorChange(e.target.value)}
+                        placeholder="#0022DA"
+                        className="font-mono text-sm px-3 py-2 bg-white border border-slate-300 rounded-lg text-[#0F172A] uppercase w-32 focus:ring-1 focus:ring-[var(--blue-primary)]"
+                        id="custom-color-hex-input"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleBrandColorChange('#0022DA')}
+                    className="text-xs text-[#64748B] hover:text-[#0F172A] underline cursor-pointer self-end mb-2"
+                  >
+                    Reset to Default Electric Blue (#0022DA)
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Computed CSS Variables Inspection Box */}
+              {(() => {
+                const vars = computeThemeVariables(content.primaryBrandColor || '#0022DA');
+                return (
+                  <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-sm font-bold text-[#0F172A]">
+                        Active Dynamic CSS Variables
+                      </h3>
+                      <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        ● Applied to :root
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#64748B] mb-4">
+                      These variables are actively computed and applied to the DOM root, dynamically coloring buttons, borders, highlights, and countdown pills.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: vars.primary }} />
+                          <span className="font-mono text-xs font-bold text-[#0F172A]">--blue-primary</span>
+                        </div>
+                        <span className="font-mono text-xs text-[#64748B]">{vars.primary}</span>
+                        <span className="block text-[11px] text-[#94A3B8] mt-1">CTA buttons, headings, accents</span>
+                      </div>
+
+                      <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: vars.hover }} />
+                          <span className="font-mono text-xs font-bold text-[#0F172A]">--blue-hover</span>
+                        </div>
+                        <span className="font-mono text-xs text-[#64748B]">{vars.hover}</span>
+                        <span className="block text-[11px] text-[#94A3B8] mt-1">Interactive hover states</span>
+                      </div>
+
+                      <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: vars.light }} />
+                          <span className="font-mono text-xs font-bold text-[#0F172A]">--blue-light</span>
+                        </div>
+                        <span className="font-mono text-xs text-[#64748B]">{vars.light}</span>
+                        <span className="block text-[11px] text-[#94A3B8] mt-1">Card backgrounds, subtle pills</span>
+                      </div>
+
+                      <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: vars.primary, opacity: 0.4 }} />
+                          <span className="font-mono text-xs font-bold text-[#0F172A]">--blue-border</span>
+                        </div>
+                        <span className="font-mono text-xs text-[#64748B]">{vars.border}</span>
+                        <span className="block text-[11px] text-[#94A3B8] mt-1">Border outlines & glow shadows</span>
+                      </div>
+                    </div>
+
+                    {/* Component Sandbox Preview */}
+                    <div className="mt-6 pt-5 border-t border-slate-200">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#475569] mb-3">
+                        Live Sales Page Component Preview
+                      </h4>
+                      <div
+                        className="p-5 rounded-xl border bg-[#F8FAFC] flex flex-wrap items-center justify-around gap-4"
+                        style={{ borderColor: 'var(--blue-border)' }}
+                      >
+                        {/* Sample CTA */}
+                        <button
+                          type="button"
+                          className="px-6 py-3 rounded-lg text-white font-bold text-sm shadow-md transition-all cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--blue-primary)',
+                            boxShadow: '0 4px 14px var(--blue-border)'
+                          }}
+                        >
+                          Get The Bundle — ₦5,000
+                        </button>
+
+                        {/* Sample Bonus Pill */}
+                        <span
+                          className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md border"
+                          style={{
+                            backgroundColor: 'var(--blue-light)',
+                            color: 'var(--blue-primary)',
+                            borderColor: 'var(--blue-border)'
+                          }}
+                        >
+                          BONUS GUIDE #1 INCLUDED
+                        </span>
+
+                        {/* Sample Price Highlight */}
+                        <div className="text-center">
+                          <span className="text-2xl font-serif font-black" style={{ color: 'var(--blue-primary)' }}>
+                            {content.priceCurrent}
+                          </span>
+                          <span className="text-xs text-slate-500 block">Early Access Rate</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB 3: URGENCY & COUNTDOWN TIMER COMPONENT                 */}
+          {/* ========================================================= */}
+          {activeTab === 'urgency' && (
+            <div className="space-y-8" id="cms-urgency-section">
+              {/* Header */}
+              <div className="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="p-2.5 rounded-xl text-white shadow-xs"
+                    style={{ backgroundColor: 'var(--blue-primary)' }}
+                  >
+                    <Clock size={22} />
+                  </span>
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-[#0F172A]">
+                      Urgency Countdown Timer Component
+                    </h2>
+                    <p className="text-sm text-[#64748B] mt-1">
+                      Display 'limited time offer' urgency to drive higher conversions on the sales page. Customizable in days, minutes, and seconds.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRestartCountdownTimer}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-lg shadow-sm hover:opacity-90 transition cursor-pointer self-start sm:self-auto shrink-0"
+                  style={{ backgroundColor: 'var(--blue-primary)' }}
+                  id="restart-timer-btn"
+                >
+                  <RefreshCw size={14} />
+                  <span>Restart Timer From Now</span>
+                </button>
+              </div>
+
+              {/* Master Toggle */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#0F172A]">
+                    Enable Countdown Urgency on Sales Page
+                  </h3>
+                  <p className="text-xs text-[#64748B] mt-0.5">
+                    Activates real-time countdown timer components in the top sticky bar and pricing section.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={content.enableCountdownTimer}
+                    onChange={(e) => setContent((prev) => ({ ...prev, enableCountdownTimer: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--blue-primary)]" />
+                </label>
+              </div>
+
+              {/* Countdown Duration Configuration (Days, Hours, Minutes, Seconds) */}
+              <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
+                    <Flame size={16} className="text-amber-500" />
+                    <span>Countdown Duration (Customizable in Days, Minutes, and Seconds)</span>
+                  </h3>
+                  <span className="text-xs text-[#64748B]">Set the exact countdown window</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {/* Days */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                      Days
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="365"
+                      value={content.countdownDays ?? 2}
+                      onChange={(e) => {
+                        const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                        setContent((prev) => ({ ...prev, countdownDays: val }));
+                      }}
+                      className="w-full text-center font-mono font-bold text-2xl p-2 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                      id="timer-input-days"
+                    />
+                    <span className="text-[11px] text-[#94A3B8] mt-1 block">Full Days</span>
+                  </div>
+
+                  {/* Hours */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                      Hours
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={content.countdownHours ?? 14}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(23, parseInt(e.target.value, 10) || 0));
+                        setContent((prev) => ({ ...prev, countdownHours: val }));
+                      }}
+                      className="w-full text-center font-mono font-bold text-2xl p-2 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                      id="timer-input-hours"
+                    />
+                    <span className="text-[11px] text-[#94A3B8] mt-1 block">0 - 23 Hours</span>
+                  </div>
+
+                  {/* Minutes */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                      Minutes
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={content.countdownMinutes ?? 30}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                        setContent((prev) => ({ ...prev, countdownMinutes: val }));
+                      }}
+                      className="w-full text-center font-mono font-bold text-2xl p-2 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                      id="timer-input-minutes"
+                    />
+                    <span className="text-[11px] text-[#94A3B8] mt-1 block">0 - 59 Minutes</span>
+                  </div>
+
+                  {/* Seconds */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                      Seconds
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={content.countdownSeconds ?? 0}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                        setContent((prev) => ({ ...prev, countdownSeconds: val }));
+                      }}
+                      className="w-full text-center font-mono font-bold text-2xl p-2 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                      id="timer-input-seconds"
+                    />
+                    <span className="text-[11px] text-[#94A3B8] mt-1 block">0 - 59 Seconds</span>
+                  </div>
+                </div>
+
+                {/* Quick Launch Presets */}
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-[#475569] mb-2">
+                    Quick Promotion Presets:
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => applyCountdownPreset(1, 0, 0, 0)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F172A] rounded-lg text-xs font-semibold transition cursor-pointer border border-slate-200"
+                    >
+                      ⚡ 24-Hour Flash Sale (1 Day)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyCountdownPreset(2, 14, 30, 0)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F172A] rounded-lg text-xs font-semibold transition cursor-pointer border border-slate-200"
+                    >
+                      🔥 Weekend Deal (2d 14h 30m)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyCountdownPreset(3, 0, 0, 0)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F172A] rounded-lg text-xs font-semibold transition cursor-pointer border border-slate-200"
+                    >
+                      📅 3-Day Launch Campaign (3 Days)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyCountdownPreset(0, 0, 45, 0)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F172A] rounded-lg text-xs font-semibold transition cursor-pointer border border-slate-200"
+                    >
+                      ⏳ Final Call (45 Minutes)
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Placement & Visibility Options */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
+                <h3 className="text-sm font-bold text-[#0F172A]">
+                  Countdown Display Locations
+                </h3>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={content.countdownShowInTopBanner !== false}
+                      onChange={(e) => setContent((prev) => ({ ...prev, countdownShowInTopBanner: e.target.checked }))}
+                      className="w-4 h-4 rounded text-[var(--blue-primary)] focus:ring-[var(--blue-primary)] border-slate-300"
+                    />
+                    <span className="text-xs sm:text-sm text-[#0F172A] font-medium">
+                      Display in Fixed Sticky Top Urgency Banner
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={content.countdownShowInPriceSection !== false}
+                      onChange={(e) => setContent((prev) => ({ ...prev, countdownShowInPriceSection: e.target.checked }))}
+                      className="w-4 h-4 rounded text-[var(--blue-primary)] focus:ring-[var(--blue-primary)] border-slate-300"
+                    />
+                    <span className="text-xs sm:text-sm text-[#0F172A] font-medium">
+                      Display High-Conversion Countdown Card directly above Pricing Box
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Customizable Copy & Urgency Texts */}
+              <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-xs space-y-4">
+                <h3 className="text-sm font-bold text-[#0F172A]">
+                  Customizable Countdown Copy & Messaging
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                    Urgency Badge Title
+                  </label>
+                  <input
+                    type="text"
+                    value={content.countdownOfferTitle || 'Limited Time Offer'}
+                    onChange={(e) => setContent((prev) => ({ ...prev, countdownOfferTitle: e.target.value }))}
+                    placeholder="Limited Time Offer"
+                    className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                    Urgency Subtitle / Price Increase Warning
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={content.countdownOfferSubtitle || ''}
+                    onChange={(e) => setContent((prev) => ({ ...prev, countdownOfferSubtitle: e.target.value }))}
+                    placeholder="Launch discount window is closing soon — price rises from ₦5,000 to ₦7,000 once timer expires."
+                    className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                    Expiry Message (Shown when countdown reaches 00:00:00)
+                  </label>
+                  <input
+                    type="text"
+                    value={content.countdownExpiredText || ''}
+                    onChange={(e) => setContent((prev) => ({ ...prev, countdownExpiredText: e.target.value }))}
+                    placeholder="Special launch pricing window closing shortly — lock in ₦5,000 now!"
+                    className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-lg text-[#0F172A] focus:ring-1 focus:ring-[var(--blue-primary)]"
+                  />
+                </div>
+              </div>
+
+              {/* Live Interactive Preview */}
+              <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-xs">
+                <h3 className="text-sm font-bold text-[#0F172A] mb-1">
+                  Live Sales Page Countdown Preview
+                </h3>
+                <p className="text-xs text-[#64748B] mb-4">
+                  This is how the countdown timer component renders live on the sales page with your customized days, minutes, and seconds.
+                </p>
+
+                {/* Preview Card */}
+                <CountdownTimer
+                  variant="card"
+                  days={content.countdownDays}
+                  hours={content.countdownHours}
+                  minutes={content.countdownMinutes}
+                  seconds={content.countdownSeconds}
+                  targetTimestamp={content.countdownTargetTimestamp}
+                  title={content.countdownOfferTitle || 'Limited Time Offer'}
+                  subtitle={content.countdownOfferSubtitle}
+                  expiredText={content.countdownExpiredText}
+                  ctaUrl="#preview"
+                  ctaText="Claim ₦5,000 Early Bird Access"
+                />
+              </div>
+            </div>
+          )}
           {activeTab === 'copy' && (
             <div className="space-y-8" id="cms-copy-section">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4">

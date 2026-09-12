@@ -6,6 +6,7 @@ import { FAQSection } from './FAQSection';
 import { StickyBar } from './StickyBar';
 import { TrustBadges } from './TrustBadges';
 import { FooterLinksModal } from './FooterLinksModal';
+import { CountdownTimer } from './CountdownTimer';
 import { trackCtaClick } from '../services/analytics';
 
 interface SalesPageProps {
@@ -26,15 +27,31 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
 
   return (
     <div className="sales-page-container min-h-screen">
-      {/* Optional Urgency Banner (Configurable in CMS, default off) */}
-      {content.enableUrgencyBanner && content.urgencyBannerText && (
+      {/* Dynamic Urgency Countdown Timer (Top Sticky Banner Variant) */}
+      {content.enableCountdownTimer && content.countdownShowInTopBanner !== false ? (
+        <CountdownTimer
+          variant="banner"
+          days={content.countdownDays}
+          hours={content.countdownHours}
+          minutes={content.countdownMinutes}
+          seconds={content.countdownSeconds}
+          targetTimestamp={content.countdownTargetTimestamp}
+          title={content.countdownOfferTitle || 'Limited Time Offer'}
+          subtitle={content.countdownOfferSubtitle}
+          expiredText={content.countdownExpiredText}
+          ctaUrl={content.priceCtaUrl || '#price-section'}
+          ctaText={content.priceCtaText}
+          onCtaClick={() => trackCtaClick('top-banner-countdown', 'Top Banner Countdown CTA', content.priceCtaUrl)}
+        />
+      ) : content.enableUrgencyBanner && content.urgencyBannerText ? (
         <div
-          className="bg-[#0022DA] text-white text-center text-xs sm:text-sm font-semibold py-2.5 px-4 sticky top-0 z-50 shadow-md"
+          className="text-white text-center text-xs sm:text-sm font-semibold py-2.5 px-4 sticky top-0 z-50 shadow-md"
+          style={{ backgroundColor: 'var(--blue-primary)' }}
           id="urgency-banner"
         >
           {content.urgencyBannerText}
         </div>
-      )}
+      ) : null}
 
       {/* HERO SECTION WITH IMAGE SLOT */}
       <Hero content={content} />
@@ -104,9 +121,16 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             className="buy-btn"
             href={content.introCtaUrl}
             id="intro-buy-btn"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackCtaClick('intro', content.introCtaText, content.introCtaUrl)}
+            target={content.introCtaUrl?.startsWith('#') ? undefined : '_blank'}
+            rel={content.introCtaUrl?.startsWith('#') ? undefined : 'noopener noreferrer'}
+            onClick={(e) => {
+              trackCtaClick('intro', content.introCtaText, content.introCtaUrl);
+              if (content.introCtaUrl?.startsWith('#')) {
+                e.preventDefault();
+                const el = document.querySelector(content.introCtaUrl);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
           >
             {content.introCtaText}
           </a>
@@ -192,6 +216,24 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
       {/* PRICE */}
       <section id="price-section">
         <div className="wrap">
+          {/* Dynamic Limited-Time Offer Countdown Urgency Card */}
+          {content.enableCountdownTimer && content.countdownShowInPriceSection !== false && (
+            <CountdownTimer
+              variant="card"
+              days={content.countdownDays}
+              hours={content.countdownHours}
+              minutes={content.countdownMinutes}
+              seconds={content.countdownSeconds}
+              targetTimestamp={content.countdownTargetTimestamp}
+              title={content.countdownOfferTitle || 'Limited Time Offer'}
+              subtitle={content.countdownOfferSubtitle}
+              expiredText={content.countdownExpiredText}
+              ctaUrl={content.priceCtaUrl}
+              ctaText={content.priceCtaText}
+              onCtaClick={() => trackCtaClick('price-countdown', 'Price Section Countdown CTA', content.priceCtaUrl)}
+            />
+          )}
+
           {content.pricePreText.map((p, index) => (
             <p key={index} id={`price-pre-p-${index}`}>
               {p}
@@ -210,9 +252,16 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             className="buy-btn"
             href={content.priceCtaUrl}
             id="price-buy-btn"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackCtaClick('price', content.priceCtaText, content.priceCtaUrl)}
+            target={content.priceCtaUrl?.startsWith('#') ? undefined : '_blank'}
+            rel={content.priceCtaUrl?.startsWith('#') ? undefined : 'noopener noreferrer'}
+            onClick={(e) => {
+              trackCtaClick('price', content.priceCtaText, content.priceCtaUrl);
+              if (content.priceCtaUrl?.startsWith('#')) {
+                e.preventDefault();
+                const el = document.querySelector(content.priceCtaUrl);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
           >
             {content.priceCtaText}
           </a>
