@@ -117,24 +117,6 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             </p>
           ))}
           <p className="solo" id="intro-solo-punchline">{content.introHighlight}</p>
-          <a
-            className="buy-btn"
-            href={content.introCtaUrl}
-            id="intro-buy-btn"
-            target={content.introCtaUrl?.startsWith('#') ? undefined : '_blank'}
-            rel={content.introCtaUrl?.startsWith('#') ? undefined : 'noopener noreferrer'}
-            onClick={(e) => {
-              trackCtaClick('intro', content.introCtaText, content.introCtaUrl);
-              if (content.introCtaUrl?.startsWith('#')) {
-                e.preventDefault();
-                const el = document.querySelector(content.introCtaUrl);
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-          >
-            {content.introCtaText}
-          </a>
-          {content.enableTrustBadges && <TrustBadges note={content.trustBadgesNote} />}
         </div>
       </section>
 
@@ -300,13 +282,19 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             className="buy-btn"
             href={content.closeCtaUrl}
             id="close-buy-btn"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackCtaClick('close', content.closeCtaText, content.closeCtaUrl)}
+            target={content.closeCtaUrl?.startsWith('#') ? undefined : '_blank'}
+            rel={content.closeCtaUrl?.startsWith('#') ? undefined : 'noopener noreferrer'}
+            onClick={(e) => {
+              trackCtaClick('close', content.closeCtaText, content.closeCtaUrl);
+              if (content.closeCtaUrl?.startsWith('#')) {
+                e.preventDefault();
+                const el = document.querySelector(content.closeCtaUrl);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
           >
             {content.closeCtaText}
           </a>
-          {content.enableTrustBadges && <TrustBadges />}
         </div>
       </section>
 
@@ -321,9 +309,16 @@ export const SalesPage: React.FC<SalesPageProps> = ({ content }) => {
             className="buy-btn"
             href={content.psCtaUrl}
             id="ps-buy-btn"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackCtaClick('ps', content.psCtaText, content.psCtaUrl)}
+            target={content.psCtaUrl?.startsWith('#') ? undefined : '_blank'}
+            rel={content.psCtaUrl?.startsWith('#') ? undefined : 'noopener noreferrer'}
+            onClick={(e) => {
+              trackCtaClick('ps', content.psCtaText, content.psCtaUrl);
+              if (content.psCtaUrl?.startsWith('#')) {
+                e.preventDefault();
+                const el = document.querySelector(content.psCtaUrl);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
           >
             {content.psCtaText}
           </a>

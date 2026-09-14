@@ -1,37 +1,35 @@
 import React from 'react';
-import { ShieldCheck, Zap, RotateCcw, Lock } from 'lucide-react';
+import { Zap, RotateCcw, ShieldCheck, Download } from 'lucide-react';
 
 interface TrustBadgesProps {
   note?: string;
   className?: string;
 }
 
-export const TrustBadges: React.FC<TrustBadgesProps> = ({ note, className = '' }) => {
+export const TrustBadges: React.FC<TrustBadgesProps> = ({ className = '' }) => {
   return (
     <div className={`trust-badges-bar ${className}`} id="trust-badges-container">
-      <div className="flex flex-wrap items-center justify-center gap-4 text-xs sm:text-sm text-[#334155]">
-        <div className="flex items-center gap-1.5 font-medium" id="badge-security">
-          <Lock size={15} className="text-[#0022DA]" />
-          <span>256-Bit SSL Checkout</span>
-        </div>
-        <div className="flex items-center gap-1.5 font-medium" id="badge-delivery">
-          <Zap size={15} className="text-[#2563EB]" />
+      <div className="flex items-center justify-center flex-wrap sm:flex-nowrap gap-x-3 sm:gap-x-4 md:gap-5 gap-y-2 text-[11.5px] sm:text-xs md:text-[12.5px] text-[#475569] font-medium tracking-tight">
+        <div className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0" id="badge-email-delivery">
+          <Zap size={14} className="text-[#2563EB] shrink-0" />
           <span>Instant Email Delivery</span>
         </div>
-        <div className="flex items-center gap-1.5 font-medium" id="badge-guarantee">
-          <RotateCcw size={15} className="text-[#059669]" />
+        <span className="hidden sm:inline text-slate-300 select-none">•</span>
+        <div className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0" id="badge-guarantee">
+          <RotateCcw size={14} className="text-[#059669] shrink-0" />
           <span>7-Day Guarantee</span>
         </div>
-        <div className="flex items-center gap-1.5 font-medium" id="badge-verified">
-          <ShieldCheck size={15} className="text-[#0F172A]" />
+        <span className="hidden sm:inline text-slate-300 select-none">•</span>
+        <div className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0" id="badge-publisher">
+          <ShieldCheck size={14} className="text-[#0F172A] shrink-0" />
           <span>Verified Publisher</span>
         </div>
-      </div>
-      {note && (
-        <div className="w-full text-center text-xs text-[#64748B] mt-1.5 opacity-90">
-          {note}
+        <span className="hidden sm:inline text-slate-300 select-none">•</span>
+        <div className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0" id="badge-download">
+          <Download size={14} className="text-[#0022DA] shrink-0" />
+          <span>Immediate Digital Download</span>
         </div>
-      )}
+      </div>
     </div>
   );
 };

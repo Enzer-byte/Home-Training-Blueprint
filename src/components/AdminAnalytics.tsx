@@ -22,6 +22,11 @@ const BUTTON_CONFIGS: Record<
   string,
   { name: string; section: string; locationDesc: string }
 > = {
+  hero: {
+    name: 'Hero Section CTA',
+    section: 'Hero Section',
+    locationDesc: 'Directly below the main headline and bundle preview'
+  },
   price: {
     name: 'Main Pricing Box CTA',
     section: 'Pricing Section',
@@ -116,6 +121,8 @@ export const AdminAnalytics: React.FC<AdminAnalyticsProps> = ({ content }) => {
 
   const getTargetUrlForButton = (key: string): string => {
     switch (key) {
+      case 'hero':
+        return content.introCtaUrl || content.priceCtaUrl;
       case 'price':
         return content.priceCtaUrl;
       case 'sticky':

@@ -1413,7 +1413,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#475569] mb-1">Intro CTA Button Label</label>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Hero CTA Button Label</label>
                   <input
                     type="text"
                     value={content.introCtaText}
@@ -1807,9 +1807,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               <div className="bg-[#F8FAFC] p-5 rounded-xl border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-[#0F172A]">Trust & Security Signals near CTAs</h3>
+                    <h3 className="font-bold text-sm text-[#0F172A]">Trust & Guarantee Badges near CTAs</h3>
                     <p className="text-xs text-[#64748B]">
-                      Displays SSL security, instant digital delivery, and 7-day guarantee icons.
+                      Displays one-row trust signals: Instant Email Delivery, 7-Day Guarantee, Verified Publisher, and Immediate Digital Download.
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
