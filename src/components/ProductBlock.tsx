@@ -25,6 +25,17 @@ export const ProductBlock: React.FC<ProductBlockProps> = ({ item, idPrefix = 'it
             loading="lazy"
             id={`${idPrefix}-${item.id}-img`}
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.triedFallback) {
+                target.dataset.triedFallback = 'true';
+                if (target.src.includes('/uploads/')) {
+                  target.src = target.src.replace('/uploads/', '/images/');
+                } else if (target.src.includes('/images/')) {
+                  target.src = target.src.replace('/images/', '/uploads/');
+                }
+              }
+            }}
           />
         </div>
       )}

@@ -91,11 +91,14 @@ export const api = {
   async getContent(): Promise<SalesPageContent> {
     try {
       const res = await fetch('/api/content');
-      const data = await res.json();
-      if (data.success && data.content) {
-        // Cache backup locally
-        localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(data.content));
-        return { ...DEFAULT_CONTENT, ...data.content };
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.content) {
+          // Cache backup locally
+          localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(data.content));
+          return { ...DEFAULT_CONTENT, ...data.content };
+        }
       }
     } catch (e) {
       console.warn('Backend fetch failed, checking local backup:', e);
@@ -105,7 +108,27 @@ export const api = {
     const local = localStorage.getItem(LOCAL_BACKUP_KEY);
     if (local) {
       try {
-        return { ...DEFAULT_CONTENT, ...JSON.parse(local) };
+        const parsed = JSON.parse(local);
+        const merged: SalesPageContent = { ...DEFAULT_CONTENT, ...parsed };
+
+        // Safeguard: Ensure permanent images from DEFAULT_CONTENT are retained if cached copy had empty strings
+        if (!merged.heroImageUrl && DEFAULT_CONTENT.heroImageUrl) {
+          merged.heroImageUrl = DEFAULT_CONTENT.heroImageUrl;
+        }
+        if (merged.coreProducts && DEFAULT_CONTENT.coreProducts) {
+          merged.coreProducts = merged.coreProducts.map((p, i) => ({
+            ...p,
+            imageUrl: p.imageUrl || DEFAULT_CONTENT.coreProducts[i]?.imageUrl || ''
+          }));
+        }
+        if (merged.bonusProducts && DEFAULT_CONTENT.bonusProducts) {
+          merged.bonusProducts = merged.bonusProducts.map((b, i) => ({
+            ...b,
+            imageUrl: b.imageUrl || DEFAULT_CONTENT.bonusProducts[i]?.imageUrl || ''
+          }));
+        }
+
+        return merged;
       } catch {
         // ignore
       }
