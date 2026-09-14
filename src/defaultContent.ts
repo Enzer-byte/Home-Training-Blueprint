@@ -8,8 +8,8 @@ export const DEFAULT_CONTENT: SalesPageContent = {
 
   heroTitle: "You're Not Failing at Discipline. You're Repeating Something You Never Chose.",
   heroSubhead: "Maybe the problem was never how you're disciplining your child — you just haven't seen the pattern yet.",
-  heroImageUrl: '',
-  heroImageAlt: 'Parent and child connecting with empathy and disciplined understanding',
+  heroImageUrl: '/uploads/1789418189458_The_Home_Training_Bundle_optim.webp',
+  heroImageAlt: 'The Home Training Blueprint bundle preview and materials',
 
   ledeParagraphs: [
     "Growing up, love in my house didn't come with hugs. It came as provision — school fees, food, clothes. Presence? Not really.",
@@ -59,21 +59,21 @@ export const DEFAULT_CONTENT: SalesPageContent = {
       id: 'blueprint',
       name: 'The Home Training Blueprint',
       description: "Shows you your exact pattern — and where it came from. Real scenarios, not textbook theory. No more guessing what you're even trying to fix.",
-      imageUrl: '',
+      imageUrl: '/uploads/1789418248682_The_Home_Training_Blue_print_o.webp',
       imageAlt: 'The Home Training Blueprint Guide'
     },
     {
       id: 'toolkit',
       name: 'Parenting Style Self-Assessment Toolkit',
       description: 'A short, honest checklist — not a quiz about parenting in general, about you. Answer it once, and your pattern stops being invisible.',
-      imageUrl: '',
+      imageUrl: '/uploads/1789418254185_Parenting_self_assesment_kit_o.webp',
       imageAlt: 'Parenting Style Self-Assessment Toolkit'
     },
     {
       id: 'handbook',
       name: 'Discipline Without Damage Handbook',
       description: "Word-for-word scripts for the exact moments you'd normally shout, threaten, or go silent. No lecturing. Just what to say instead — so correction builds respect, not fear.",
-      imageUrl: '',
+      imageUrl: '/uploads/1789418261256_Descipline_without_damage_hand.webp',
       imageAlt: 'Discipline Without Damage Handbook'
     }
   ],
@@ -85,7 +85,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
       bonusTag: 'Bonus 1',
       name: '20 Parent-Child Conversations That Build Trust',
       description: '20 ready conversation starters for repairing after a hard moment — the step nobody ever showed you, so correction doesn\'t turn into "punish harder, apologise never."',
-      imageUrl: '',
+      imageUrl: '/uploads/1789418272773_20_parent_child_conversation_o.webp',
       imageAlt: 'Bonus 1: 20 Parent-Child Conversations That Build Trust'
     },
     {
@@ -94,7 +94,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
       bonusTag: 'Bonus 2',
       name: 'The In-The-Moment Response Card',
       description: 'A one-page card built for the 10-second glance mid-meltdown — not calm-Tuesday reading. Comes with a weekly check-in, so you can actually see yourself changing.',
-      imageUrl: '',
+      imageUrl: '/uploads/1789418280115_The_In-the-momment_Response_ca.webp',
       imageAlt: 'Bonus 2: The In-The-Moment Response Card'
     }
   ],

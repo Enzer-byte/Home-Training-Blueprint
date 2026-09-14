@@ -40,7 +40,7 @@ export const Hero: React.FC<HeroProps> = ({ content }) => {
               <img
                 src={content.heroImageUrl}
                 alt={content.heroImageAlt || 'The Home Training Blueprint bundle preview'}
-                className="w-full object-cover"
+                className="w-full object-contain"
                 id="hero-image"
                 referrerPolicy="no-referrer"
               />
