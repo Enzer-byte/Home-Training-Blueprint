@@ -4,53 +4,53 @@ export const CHECKOUT_URL =
   'https://nestuge.com/checkout?items=%5B%7B%22id%22%3A%22pr_mtw1msxq7hws1maikpflkzq6r5f47%22%2C%22type%22%3A%22registration%22%2C%22plan%22%3A%22pl_mtw23ncu5txku6p3isvdevpmnxjxv%22%2C%22count%22%3A1%2C%22affiliate%22%3Anull%7D%5D&currency=NGN&redirectUrl=https%3A%2F%2Fnestuge.com%2Fhometrainingblueprint&utm_source=salespage';
 
 export const DEFAULT_CONTENT: SalesPageContent = {
-  mastheadText: 'SheRoots Foundation',
+  mastheadText: 'The Conscious Parent',
 
   heroTitle: "You're Not Failing at Discipline. You're Repeating Something You Never Chose.",
-  heroSubhead: "Maybe the problem was never how you're disciplining your child — you just haven't seen the pattern yet.",
+  heroSubhead: "Maybe the problem was never how you're disciplining your child, you just haven't seen the pattern yet.",
   heroImageUrl: '/uploads/1789418189458_The_Home_Training_Bundle_optim.webp',
-  heroImageAlt: 'The Home Training Blueprint bundle preview and materials',
+  heroImageAlt: 'Parent and child connecting with empathy and disciplined understanding',
 
   ledeParagraphs: [
-    "Growing up, love in my house didn't come with hugs. It came as provision — school fees, food, clothes. Presence? Not really.",
+    "Growing up, love in my house didn't come with hugs. It came as provision, school fees, food, and clothes. Presence? Not really.",
     "Cry, and you're told to stop.",
-    "Talk back — even with sense — and you learn fast to swallow it.",
+    "Talk back, even with sense, and you learn fast to swallow it.",
     "My parents weren't bad people. Their own parents raised them the same way. So that's how they raised me too.",
-    "But something happens to a child raised like that. You carry it into adulthood without even knowing you're carrying it. Somebody raises their voice, your body tightens. You walk into a room already reading the mood — checking how not to vex whoever's in charge.",
+    "But something happens to a child raised like that. You carry it into adulthood without even knowing you're carrying it. Somebody raises their voice, your body tightens. You walk into a room already reading the mood, checking how not to vex whoever's in charge.",
     "I carried all of that into my own parenting.",
     "Then one day, I heard it. My own voice. Same tone.",
-    "I watched my child's face shift — that same look, that same silence I know too well. Because I lived it first."
+    "I watched my child's face shift, that same look, that same silence I know too well. Because I lived it first."
   ],
   ledeHighlight: "That's where this started.",
 
   problemParagraphs: [
     "You've tried to hold yourself back. Watched the videos. Read the advice.",
-    "And still — that moment comes, and you react the exact way you swore you never would.",
+    "And still, that moment comes, and you react the exact way you swore you never would.",
     "Not because you don't love your child. Not because you're not trying.",
     "It's because you're stuck between two fears.",
-    "Fear of being too soft — raising a child with no respect, no boundaries, no sense.",
-    "And fear of becoming the parent you grew up under — the shouting, the fear, the silence that followed.",
+    "Fear of being too soft, raising a child with no respect, no boundaries, no sense.",
+    "And fear of becoming the parent you grew up under, the shouting, the fear, the silence that followed.",
     "So you go back and forth. Strict one day. Guilty the next. Holding back until you can't, then reacting until you're ashamed.",
-    "And slowly, you watch it happen — your child pulling away. Talking less. Going quiet in a way that wasn't there before."
+    "And slowly, you watch it happen, your child pulling away. Talking less. Going quiet in a way that wasn't there before."
   ],
-  problemPunchline: "You don't need another theory on parenting. You need to know — in the exact moment it matters — what to do instead.",
+  problemPunchline: "You don't need another theory on parenting. You need to know, in the exact moment it matters, what to do instead.",
 
   turnParagraphs: [
     "Here's what nobody told you.",
-    "You weren't just taught how to discipline. You were taught a pattern — and patterns don't ask permission. They just run.",
+    "You weren't just taught how to discipline. You were taught a pattern, and patterns don't ask permission. They just run.",
     "Every time you react in a way you hate, that's not a character flaw. That's the pattern, playing out again.",
     "You can't fix what you can't see.",
     "That's the actual turn. Not more willpower. Not another video."
   ],
-  turnBanner: "First, see the pattern. Then, replace it — one moment at a time.",
+  turnBanner: "First, see the pattern. Then, replace it, one moment at a time.",
 
   introParagraphs: [
     "This is what The Home Training Blueprint Bundle does.",
-    "It shows you your pattern — clearly, without guilt.",
+    "It shows you your pattern, clearly, without guilt.",
     "Then it hands you what to do instead. Real scripts. Real words. For the moment it actually happens, not just for calm Sunday afternoons.",
     "Not theory. Not another book you won't finish."
   ],
-  introHighlight: "A way to see the pattern — and change what happens next.",
+  introHighlight: "A way to see the pattern, and change what happens next.",
   introCtaText: "Get The Home Training Blueprint Bundle — ₦5,000",
   introCtaUrl: CHECKOUT_URL,
 
@@ -58,21 +58,21 @@ export const DEFAULT_CONTENT: SalesPageContent = {
     {
       id: 'blueprint',
       name: 'The Home Training Blueprint',
-      description: "Shows you your exact pattern — and where it came from. Real scenarios, not textbook theory. No more guessing what you're even trying to fix.",
+      description: "Shows you your exact pattern and where it came from. Real scenarios, not textbook theory. No more guessing what you're even trying to fix.",
       imageUrl: '/uploads/1789418248682_The_Home_Training_Blue_print_o.webp',
       imageAlt: 'The Home Training Blueprint Guide'
     },
     {
       id: 'toolkit',
       name: 'Parenting Style Self-Assessment Toolkit',
-      description: 'A short, honest checklist — not a quiz about parenting in general, about you. Answer it once, and your pattern stops being invisible.',
+      description: 'A short, honest checklist, not a quiz about parenting in general, about you. Answer it once, and your pattern stops being invisible.',
       imageUrl: '/uploads/1789418254185_Parenting_self_assesment_kit_o.webp',
       imageAlt: 'Parenting Style Self-Assessment Toolkit'
     },
     {
       id: 'handbook',
       name: 'Discipline Without Damage Handbook',
-      description: "Word-for-word scripts for the exact moments you'd normally shout, threaten, or go silent. No lecturing. Just what to say instead — so correction builds respect, not fear.",
+      description: 'Word-for-word scripts for the exact moments you\'d normally shout, threaten, or go silent. No lecturing. Just what to say instead, so correction builds respect, not fear.',
       imageUrl: '/uploads/1789418261256_Descipline_without_damage_hand.webp',
       imageAlt: 'Discipline Without Damage Handbook'
     }
@@ -84,7 +84,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
       isBonus: true,
       bonusTag: 'Bonus 1',
       name: '20 Parent-Child Conversations That Build Trust',
-      description: '20 ready conversation starters for repairing after a hard moment — the step nobody ever showed you, so correction doesn\'t turn into "punish harder, apologise never."',
+      description: '20 ready conversation starters for repairing after a hard moment, the step nobody ever showed you, so correction doesn\'t turn into "punish harder, apologise never."',
       imageUrl: '/uploads/1789418272773_20_parent_child_conversation_o.webp',
       imageAlt: 'Bonus 1: 20 Parent-Child Conversations That Build Trust'
     },
@@ -93,7 +93,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
       isBonus: true,
       bonusTag: 'Bonus 2',
       name: 'The In-The-Moment Response Card',
-      description: 'A one-page card built for the 10-second glance mid-meltdown — not calm-Tuesday reading. Comes with a weekly check-in, so you can actually see yourself changing.',
+      description: 'A one page card built for the 10-second glance mid meltdown, not calm Tuesday reading. Comes with a weekly check-in, so you can actually see yourself changing.',
       imageUrl: '/uploads/1789418280115_The_In-the-momment_Response_ca.webp',
       imageAlt: 'Bonus 2: The In-The-Moment Response Card'
     }
@@ -103,7 +103,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
   proofParagraph2Bold: "What it won't do:",
   proofParagraph2Rest: "it won't fix your child. It won't make hard moments disappear. It will show you what you're actually working with — and give you words for the moment that used to leave you empty-handed.",
   proofParagraph3: "If it doesn't do that, tell us within 7 days and we'll sort you out.",
-  proofParagraph4: 'Got a question before you buy? Email us. We\'ll answer.',
+  proofParagraph4: "Got a question before you buy? Email us. We'll answer.",
 
   whoForTitle: 'This is for you if:',
   whoForItems: [
@@ -113,7 +113,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
   ],
   notForTitle: 'This is not for you if:',
   notForItems: [
-    'Your child has a diagnosed behavioural or developmental condition needing professional support — this isn\'t a substitute for that',
+    'Your child has a diagnosed behavioural or developmental condition needing professional support, this isn\'t a substitute for that',
     'You want a quick trick with no honest look at yourself first'
   ],
 
@@ -136,7 +136,7 @@ export const DEFAULT_CONTENT: SalesPageContent = {
     {
       id: 'faq1',
       question: '"I\'ve bought things like this and never opened them."',
-      answer: "Fair. That's why this comes with the Response Card — built for the moment, not for a shelf."
+      answer: "Fair. That's why this comes with the Response Card, built for the moment, not for a shelf."
     },
     {
       id: 'faq2',
@@ -146,12 +146,12 @@ export const DEFAULT_CONTENT: SalesPageContent = {
     {
       id: 'faq3',
       question: '"If this says I\'m the problem, I can\'t handle that right now."',
-      answer: "It won't. This is information, not an indictment — read the story above again if you're not sure."
+      answer: "It won't. This is information, not an indictment, read the story above again if you're not sure."
     },
     {
       id: 'faq4',
       question: '"Who are you to tell me how to raise my child?"',
-      answer: "Someone who lived this pattern before trying to fix it. Not a credentials list — real experience unwinding it."
+      answer: "Someone who lived this pattern before trying to fix it. Not a credentials list, real experience unwinding it."
     },
     {
       id: 'faq5',
@@ -175,12 +175,12 @@ export const DEFAULT_CONTENT: SalesPageContent = {
   whyNowKicker: 'The only real choice is which pattern shows up in it.',
 
   closeTitle: 'You already love your child.',
-  closeParagraph: 'Now you get to see the pattern — and choose differently, starting with the next moment it matters.',
+  closeParagraph: 'Now you get to see the pattern, and choose differently, starting with the next moment it matters.',
   closeCtaText: 'Get The Home Training Blueprint Bundle — ₦5,000',
   closeCtaUrl: CHECKOUT_URL,
 
   psPrefix: 'PS —',
-  psParagraph1: 'A repeatable way to correct behaviour that builds respect, not fear — starting with your very next disciplinary moment.',
+  psParagraph1: 'A repeatable way to correct behaviour that builds respect, not fear, starting with your very next disciplinary moment.',
   psParagraph2: "Try it 7 days. Doesn't work for you? Email us and we'll sort it out.",
   psCtaText: 'Get The Home Training Blueprint Bundle — ₦5,000',
   psCtaUrl: CHECKOUT_URL,

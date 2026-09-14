@@ -16,7 +16,7 @@ import { applyBrandColor } from './utils/theme';
 export default function App() {
   const [content, setContent] = useState<SalesPageContent>(DEFAULT_CONTENT);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
 
   // Apply primary brand color dynamically to CSS variables whenever it updates
   useEffect(() => {
@@ -25,27 +25,38 @@ export default function App() {
     }
   }, [content.primaryBrandColor]);
 
-  // Load initial content and check admin authentication status
+  // Load latest content in the background and verify admin auth
   useEffect(() => {
+    let isMounted = true;
     async function init() {
       try {
         const [fetchedContent, isAuth] = await Promise.all([
           api.getContent(),
           api.verifyAuth()
         ]);
-        setContent(fetchedContent);
-        setIsAuthenticated(isAuth);
+        if (isMounted) {
+          if (fetchedContent) {
+            setContent(fetchedContent);
+          }
+          setIsAuthenticated(isAuth);
+        }
       } catch (err) {
-        console.error('Failed to initialize app state:', err);
+        console.error('Failed to sync app state:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setAuthChecking(false);
+        }
       }
     }
     init();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
+    setAuthChecking(false);
   };
 
   const handleLogout = async () => {
@@ -57,28 +68,24 @@ export default function App() {
     setContent(newContent);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#0022DA] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="font-serif text-[#0F172A] text-sm">Loading Home Training Blueprint...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Sales Page Route */}
+        {/* Public Sales Page Route — renders instantly with no blocking spinner */}
         <Route path="/" element={<SalesPage content={content} />} />
 
-        {/* CMS Route (/admin) */}
+        {/* CMS Route (/admin) — checks auth state before revealing CMS */}
         <Route
           path="/admin"
           element={
-            isAuthenticated ? (
+            authChecking ? (
+              <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <div className="w-10 h-10 border-3 border-[#0022DA] border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="font-serif text-[#0F172A] text-sm">Verifying admin access...</p>
+                </div>
+              </div>
+            ) : isAuthenticated ? (
               <AdminCMS
                 initialContent={content}
                 onContentUpdate={handleContentUpdate}
