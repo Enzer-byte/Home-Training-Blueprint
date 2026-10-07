@@ -248,7 +248,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   };
 
   // Urgency Countdown Handlers (Customizable in days, minutes, and seconds)
-  const handleRestartCountdownTimer = () => {
+  const handleRestartCountdownTimer = async () => {
     const totalMs = (
       (content.countdownDays || 0) * 86400 +
       (content.countdownHours || 0) * 3600 +
@@ -268,26 +268,61 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       }
     }
 
-    setContent((prev) => ({
-      ...prev,
+    const updatedContent = {
+      ...content,
       countdownTargetTimestamp: newTarget
-    }));
-    triggerStatus('saved', 'Countdown timer restarted and synchronized with backend!');
+    };
+    setContent(updatedContent);
+    onContentUpdate(updatedContent);
+    setSaveStatus('saving');
+    try {
+      const res = await api.saveContent(updatedContent);
+      if (res.success) {
+        triggerStatus('saved', 'Countdown timer restarted and synchronized with backend & live visitors!');
+      } else {
+        triggerStatus('error', res.message || 'Failed to sync timer to backend');
+      }
+    } catch {
+      triggerStatus('error', 'Network error while saving countdown timer');
+    }
   };
 
-  const applyCountdownPreset = (d: number, h: number, m: number, s: number) => {
+  const applyCountdownPreset = async (d: number, h: number, m: number, s: number) => {
     const totalMs = (d * 86400 + h * 3600 + m * 60 + s) * 1000;
     const newTarget = Date.now() + totalMs;
 
-    setContent((prev) => ({
-      ...prev,
+    if (typeof window !== 'undefined') {
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach((k) => {
+          if (k.startsWith('htb_timer_')) localStorage.removeItem(k);
+        });
+      } catch (e) {
+        console.warn('Could not clear timer localStorage', e);
+      }
+    }
+
+    const updatedContent = {
+      ...content,
       countdownDays: d,
       countdownHours: h,
       countdownMinutes: m,
       countdownSeconds: s,
       countdownTargetTimestamp: newTarget
-    }));
-    triggerStatus('saved', `Applied ${d}d ${h}h ${m}m ${s}s preset!`);
+    };
+    setContent(updatedContent);
+    onContentUpdate(updatedContent);
+    setSaveStatus('saving');
+    try {
+      const res = await api.saveContent(updatedContent);
+      if (res.success) {
+        triggerStatus('saved', `Applied ${d}d ${h}h ${m}m ${s}s preset and published to backend!`);
+      } else {
+        triggerStatus('error', res.message || 'Failed to publish preset');
+      }
+    } catch {
+      triggerStatus('error', 'Network error while saving preset');
+    }
   };
 
   return (
@@ -1228,6 +1263,23 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   ctaUrl="#preview"
                   ctaText="Claim ₦5,000 Early Bird Access"
                 />
+              </div>
+
+              {/* Direct Save Action for Urgency Tab */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="text-xs text-[#475569]">
+                  Save all countdown duration, visibility, and copy changes directly to live visitors.
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saveStatus === 'saving'}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--blue-primary)] hover:bg-[var(--blue-hover)] text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition cursor-pointer disabled:opacity-50"
+                  id="save-urgency-tab-btn"
+                >
+                  <Save size={16} />
+                  <span>{saveStatus === 'saving' ? 'Publishing Changes...' : 'Save & Publish Countdown Settings'}</span>
+                </button>
               </div>
             </div>
           )}

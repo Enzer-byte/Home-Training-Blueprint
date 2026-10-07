@@ -46,6 +46,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     }
     // Calculate from days, hours, minutes, seconds
     const totalMs = (days * 86400 + (hours || 0) * 3600 + minutes * 60 + seconds) * 1000;
+    if (totalMs === 0) {
+      return Date.now();
+    }
     // Check localStorage for visitor persistence if no global timestamp
     if (typeof window !== 'undefined') {
       const storedKey = `htb_timer_${days}_${hours}_${minutes}_${seconds}`;
@@ -56,11 +59,11 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
           return parsed;
         }
       }
-      const newTarget = Date.now() + (totalMs > 0 ? totalMs : 86400 * 1000);
+      const newTarget = Date.now() + totalMs;
       localStorage.setItem(storedKey, String(newTarget));
       return newTarget;
     }
-    return Date.now() + (totalMs > 0 ? totalMs : 86400 * 1000);
+    return Date.now() + totalMs;
   });
 
   // Keep target in sync if targetTimestamp or days/minutes change in CMS
@@ -69,22 +72,24 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
       setEndTime(targetTimestamp);
     } else {
       const totalMs = (days * 86400 + (hours || 0) * 3600 + minutes * 60 + seconds) * 1000;
-      if (totalMs > 0) {
-        const storedKey = `htb_timer_${days}_${hours}_${minutes}_${seconds}`;
-        const saved = typeof window !== 'undefined' ? localStorage.getItem(storedKey) : null;
-        if (saved) {
-          const parsed = parseInt(saved, 10);
-          if (parsed > Date.now()) {
-            setEndTime(parsed);
-            return;
-          }
-        }
-        const newTarget = Date.now() + totalMs;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(storedKey, String(newTarget));
-        }
-        setEndTime(newTarget);
+      if (totalMs === 0) {
+        setEndTime(Date.now());
+        return;
       }
+      const storedKey = `htb_timer_${days}_${hours}_${minutes}_${seconds}`;
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(storedKey) : null;
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (parsed > Date.now()) {
+          setEndTime(parsed);
+          return;
+        }
+      }
+      const newTarget = Date.now() + totalMs;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storedKey, String(newTarget));
+      }
+      setEndTime(newTarget);
     }
   }, [days, hours, minutes, seconds, targetTimestamp]);
 
