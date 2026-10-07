@@ -1,6 +1,11 @@
 import { SalesPageContent, AnalyticsStats, ImageOptimizationOptions, OptimizationResult } from '../types';
 import { DEFAULT_CONTENT } from '../defaultContent';
 import { resizeAndCompressImage, formatFileSize, uploadToFirebaseStorage } from '../utils/imageOptimizer';
+import {
+  isSupabaseConfigured,
+  fetchSupabaseContent,
+  saveSupabaseContent
+} from './supabase';
 
 export { resizeAndCompressImage, formatFileSize, uploadToFirebaseStorage };
 
@@ -87,8 +92,22 @@ export const api = {
     localStorage.removeItem(USERNAME_KEY);
   },
 
-  // Fetch sales page content
+  // Fetch sales page content (checks Supabase first, then backend API, then localStorage, then defaults)
   async getContent(): Promise<SalesPageContent> {
+    // 1. If Supabase is configured, fetch live from Supabase
+    if (isSupabaseConfigured()) {
+      try {
+        const supabaseData = await fetchSupabaseContent();
+        if (supabaseData) {
+          localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(supabaseData));
+          return { ...DEFAULT_CONTENT, ...supabaseData };
+        }
+      } catch (err) {
+        console.warn('Supabase fetch failed, falling back:', err);
+      }
+    }
+
+    // 2. Fall back to local Express backend if available
     try {
       const res = await fetch('/api/content');
       const contentType = res.headers.get('content-type');
@@ -104,7 +123,7 @@ export const api = {
       console.warn('Backend fetch failed, checking local backup:', e);
     }
 
-    // Check local backup
+    // 3. Check local backup
     const local = localStorage.getItem(LOCAL_BACKUP_KEY);
     if (local) {
       try {
@@ -137,11 +156,29 @@ export const api = {
     return DEFAULT_CONTENT;
   },
 
-  // Save updated content
+  // Save updated content (saves directly to Supabase and syncs to backend API and localStorage)
   async saveContent(content: SalesPageContent): Promise<{ success: boolean; message?: string }> {
     const token = this.getToken();
     localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(content));
 
+    let supabaseSuccess = false;
+    let supabaseError = '';
+
+    // 1. If Supabase is configured, write directly to cloud database
+    if (isSupabaseConfigured()) {
+      try {
+        const sRes = await saveSupabaseContent(content);
+        if (sRes.success) {
+          supabaseSuccess = true;
+        } else {
+          supabaseError = sRes.message || 'Supabase save failed';
+        }
+      } catch (err) {
+        supabaseError = err instanceof Error ? err.message : 'Failed to save to Supabase';
+      }
+    }
+
+    // 2. Also save to backend API if available
     try {
       const res = await fetch('/api/content', {
         method: 'PUT',
@@ -153,16 +190,24 @@ export const api = {
       });
       const data = await res.json();
       if (data.success) {
-        return { success: true };
+        return { success: true, message: supabaseSuccess ? 'Published to Supabase and server!' : undefined };
       }
-      return { success: false, message: data.message };
     } catch (e) {
-      console.warn('Backend save failed, saved to local cache:', e);
-      return {
-        success: true,
-        message: 'Saved to local browser cache (backend will sync once connected).'
-      };
+      console.warn('Backend save failed, saved to local/cloud cache:', e);
     }
+
+    if (supabaseSuccess) {
+      return { success: true, message: 'Published directly to Supabase cloud database!' };
+    }
+
+    if (isSupabaseConfigured() && !supabaseSuccess) {
+      return { success: false, message: supabaseError || 'Failed to save to Supabase' };
+    }
+
+    return {
+      success: true,
+      message: 'Saved to local browser cache (backend will sync once connected).'
+    };
   },
 
   // Upload image (raw base64)

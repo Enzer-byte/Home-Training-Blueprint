@@ -161,9 +161,67 @@ app.post('/api/admin/logout', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Logged out' });
 });
 
-// GET Current Sales Page Content
-app.get('/api/content', (req: Request, res: Response) => {
+// Supabase synchronization helpers
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+
+async function fetchFromSupabase(): Promise<unknown | null> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
   try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/site_content?id=eq.sales_page&select=data`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if (res.ok) {
+      const rows = (await res.json()) as Array<{ data?: unknown }>;
+      if (rows && rows.length > 0 && rows[0].data) {
+        return rows[0].data;
+      }
+    }
+  } catch (err) {
+    console.warn('Server Supabase fetch error:', err);
+  }
+  return null;
+}
+
+async function syncToSupabase(contentData: unknown): Promise<void> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/site_content`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        id: 'sales_page',
+        data: contentData,
+        updated_at: new Date().toISOString()
+      })
+    });
+  } catch (err) {
+    console.warn('Server Supabase sync error:', err);
+  }
+}
+
+// GET Current Sales Page Content
+app.get('/api/content', async (req: Request, res: Response) => {
+  try {
+    // 1. Try fetching from Supabase first if configured
+    const remoteData = await fetchFromSupabase();
+    if (remoteData) {
+      // Sync local cache
+      try {
+        fs.writeFileSync(CONTENT_FILE, JSON.stringify(remoteData, null, 2), 'utf-8');
+      } catch {}
+      return res.json({ success: true, content: remoteData });
+    }
+
+    // 2. Fallback to local file
     if (fs.existsSync(CONTENT_FILE)) {
       const fileData = fs.readFileSync(CONTENT_FILE, 'utf-8');
       const content = JSON.parse(fileData);
@@ -178,7 +236,7 @@ app.get('/api/content', (req: Request, res: Response) => {
 });
 
 // UPDATE Sales Page Content (Requires Auth)
-app.put('/api/content', (req: Request, res: Response) => {
+app.put('/api/content', async (req: Request, res: Response) => {
   if (!isAuthorized(req)) {
     return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
   }
@@ -190,6 +248,10 @@ app.put('/api/content', (req: Request, res: Response) => {
     }
 
     fs.writeFileSync(CONTENT_FILE, JSON.stringify(content, null, 2), 'utf-8');
+
+    // Sync to Supabase in background
+    syncToSupabase(content).catch((e) => console.warn('Background Supabase sync error:', e));
+
     return res.json({
       success: true,
       message: 'Content updated successfully',

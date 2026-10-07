@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Save,
   CheckCircle,
@@ -20,7 +20,13 @@ import {
   Palette,
   Clock,
   Flame,
-  RefreshCw
+  RefreshCw,
+  Database,
+  Activity,
+  Wifi,
+  WifiOff,
+  X,
+  XCircle
 } from 'lucide-react';
 import { SalesPageContent, ProductItem, FaqItem, TestimonialItem } from '../types';
 import { api } from '../services/api';
@@ -29,6 +35,12 @@ import { DEFAULT_CONTENT } from '../defaultContent';
 import { AdminAnalytics } from './AdminAnalytics';
 import { CountdownTimer } from './CountdownTimer';
 import { applyBrandColor, BRAND_COLOR_PRESETS, computeThemeVariables } from '../utils/theme';
+import {
+  isSupabaseConfigured,
+  checkSupabaseHealth,
+  getSupabaseProjectDomain,
+  SupabaseHealthResult
+} from '../services/supabase';
 
 interface AdminCMSProps {
   initialContent: SalesPageContent;
@@ -49,6 +61,33 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Supabase Connection Diagnostics State
+  const [supabaseHealth, setSupabaseHealth] = useState<SupabaseHealthResult | null>(null);
+  const [supabaseChecking, setSupabaseChecking] = useState<boolean>(true);
+  const [showDiagnosticModal, setShowDiagnosticModal] = useState<boolean>(false);
+
+  // Diagnostic health check runner
+  const runSupabaseDiagnostic = async () => {
+    setSupabaseChecking(true);
+    try {
+      const res = await checkSupabaseHealth();
+      setSupabaseHealth(res);
+    } catch (err) {
+      setSupabaseHealth({
+        status: 'error',
+        message: err instanceof Error ? err.message : 'Diagnostic probe failed.',
+        lastChecked: new Date().toLocaleTimeString()
+      });
+    } finally {
+      setSupabaseChecking(false);
+    }
+  };
+
+  // Run initial diagnostic check on mount
+  useEffect(() => {
+    runSupabaseDiagnostic();
+  }, []);
 
   // File input refs
   const heroFileRef = useRef<HTMLInputElement>(null);
@@ -340,6 +379,52 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             >
               ADMIN
             </span>
+
+            {/* Supabase Connection Diagnostic Indicator Button */}
+            <button
+              type="button"
+              onClick={() => setShowDiagnosticModal(true)}
+              className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 rounded-full border transition cursor-pointer hover:opacity-90 shadow-xs"
+              style={
+                supabaseChecking
+                  ? { backgroundColor: 'rgba(234, 179, 8, 0.15)', borderColor: 'rgba(234, 179, 8, 0.4)', color: '#FEF08A' }
+                  : supabaseHealth?.status === 'connected'
+                  ? { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#A7F3D0' }
+                  : supabaseHealth?.status === 'error'
+                  ? { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.5)', color: '#FECACA' }
+                  : { backgroundColor: 'rgba(100, 116, 139, 0.2)', borderColor: 'rgba(100, 116, 139, 0.4)', color: '#CBD5E1' }
+              }
+              title="Click to view Supabase database connection diagnostics"
+              id="supabase-diagnostic-badge-btn"
+            >
+              <Database size={12} className="shrink-0" />
+              {supabaseChecking ? (
+                <>
+                  <RefreshCw size={11} className="animate-spin text-amber-300 shrink-0" />
+                  <span>Checking...</span>
+                </>
+              ) : supabaseHealth?.status === 'connected' ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span>Connected</span>
+                  {supabaseHealth.latencyMs !== undefined && (
+                    <span className="text-[10px] text-emerald-300/80 font-mono hidden sm:inline">
+                      ({supabaseHealth.latencyMs}ms)
+                    </span>
+                  )}
+                </>
+              ) : supabaseHealth?.status === 'error' ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-red-400 animate-ping shrink-0" />
+                  <span>Error</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+                  <span>Local Mode</span>
+                </>
+              )}
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
@@ -2021,6 +2106,178 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 id="confirm-reset-button"
               >
                 Yes, Revert to Defaults
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Supabase Connection Diagnostics Modal */}
+      {showDiagnosticModal && (
+        <div
+          className="fixed inset-0 z-[1200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="diagnostic-modal-title"
+        >
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 text-[#0F172A] space-y-5">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-[var(--blue-light)] text-[var(--blue-primary)] border border-[var(--blue-border)]">
+                  <Database size={20} />
+                </span>
+                <div>
+                  <h3 id="diagnostic-modal-title" className="font-serif text-lg font-bold text-[#0F172A] leading-tight m-0">
+                    Supabase Database Diagnostics
+                  </h3>
+                  <p className="text-xs text-[#64748B] m-0 mt-0.5">
+                    Live connection and publishing status monitor
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowDiagnosticModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Close diagnostic panel"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Status Hero Card */}
+            <div
+              className="p-4 rounded-xl border flex items-start gap-3 transition-colors"
+              style={
+                supabaseChecking
+                  ? { backgroundColor: '#FEFCE8', borderColor: '#FEF08A' }
+                  : supabaseHealth?.status === 'connected'
+                  ? { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }
+                  : supabaseHealth?.status === 'error'
+                  ? { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }
+                  : { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }
+              }
+            >
+              <div className="shrink-0 mt-0.5">
+                {supabaseChecking ? (
+                  <RefreshCw size={20} className="animate-spin text-amber-600" />
+                ) : supabaseHealth?.status === 'connected' ? (
+                  <CheckCircle size={20} className="text-emerald-600" />
+                ) : supabaseHealth?.status === 'error' ? (
+                  <XCircle size={20} className="text-red-600" />
+                ) : (
+                  <Activity size={20} className="text-slate-500" />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-[#0F172A]">
+                    Connection Status:
+                  </span>
+                  <span
+                    className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
+                    style={
+                      supabaseChecking
+                        ? { backgroundColor: '#FEF08A', color: '#854D0E' }
+                        : supabaseHealth?.status === 'connected'
+                        ? { backgroundColor: '#D1FAE5', color: '#065F46' }
+                        : supabaseHealth?.status === 'error'
+                        ? { backgroundColor: '#FEE2E2', color: '#991B1B' }
+                        : { backgroundColor: '#E2E8F0', color: '#475569' }
+                    }
+                  >
+                    {supabaseChecking
+                      ? 'Checking'
+                      : supabaseHealth?.status === 'connected'
+                      ? 'Connected'
+                      : supabaseHealth?.status === 'error'
+                      ? 'Error'
+                      : 'Local Storage'}
+                  </span>
+                </div>
+
+                <p className="text-xs text-[#475569] mt-1 mb-0 leading-relaxed">
+                  {supabaseChecking
+                    ? 'Probing Supabase REST endpoint and verifying site_content table access...'
+                    : supabaseHealth?.message}
+                </p>
+              </div>
+            </div>
+
+            {/* Diagnostics Metrics Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span className="text-[#64748B] block font-medium mb-1">Response Latency</span>
+                <span className="text-base font-bold font-mono text-[#0F172A] flex items-center gap-1">
+                  {supabaseHealth?.latencyMs !== undefined ? `${supabaseHealth.latencyMs} ms` : '--'}
+                  {supabaseHealth?.latencyMs !== undefined && (
+                    <span
+                      className="text-[10px] font-sans px-1.5 py-0.5 rounded font-semibold"
+                      style={
+                        supabaseHealth.latencyMs < 150
+                          ? { backgroundColor: '#DCFCE7', color: '#166534' }
+                          : supabaseHealth.latencyMs < 350
+                          ? { backgroundColor: '#FEF9C3', color: '#854D0E' }
+                          : { backgroundColor: '#FEE2E2', color: '#991B1B' }
+                      }
+                    >
+                      {supabaseHealth.latencyMs < 150 ? 'Fast' : supabaseHealth.latencyMs < 350 ? 'Good' : 'Slow'}
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span className="text-[#64748B] block font-medium mb-1">Target Table</span>
+                <span className="text-sm font-bold text-[#0F172A] font-mono truncate block" title="site_content (id: sales_page)">
+                  site_content
+                </span>
+                <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">
+                  ✓ Row 'sales_page' synced
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 col-span-2">
+                <span className="text-[#64748B] block font-medium mb-1">Database Endpoint</span>
+                <span className="text-xs font-mono text-[#0F172A] truncate block select-all">
+                  {getSupabaseProjectDomain() || 'VITE_SUPABASE_URL not configured'}
+                </span>
+                <span className="text-[10px] text-[#64748B] block mt-0.5">
+                  Last verified probe: {supabaseHealth?.lastChecked || 'Just now'}
+                </span>
+              </div>
+            </div>
+
+            {/* Explanatory Help Card */}
+            <div className="text-[11px] text-[#64748B] bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
+              <strong className="text-[#0F172A] block mb-0.5">How this works on your live Netlify site:</strong>
+              When <strong>Connected</strong>, all changes saved in this CMS publish straight to Supabase via client-side HTTPS. Visitors on your custom domain immediately fetch these updates without rebuilds or delays.
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={runSupabaseDiagnostic}
+                disabled={supabaseChecking}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg border border-slate-300 hover:bg-slate-100 transition cursor-pointer text-[#0F172A] disabled:opacity-50"
+                id="retest-supabase-connection-btn"
+              >
+                <RefreshCw size={13} className={supabaseChecking ? 'animate-spin' : ''} />
+                <span>{supabaseChecking ? 'Testing...' : 'Run Test Probe Now'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowDiagnosticModal(false)}
+                className="px-4 py-2 text-xs font-bold text-white rounded-lg transition shadow-xs cursor-pointer hover:opacity-95"
+                style={{ backgroundColor: 'var(--blue-primary)' }}
+                id="close-diagnostic-modal-btn"
+              >
+                Done
               </button>
             </div>
           </div>
